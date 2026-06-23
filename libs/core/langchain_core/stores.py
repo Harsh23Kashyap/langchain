@@ -48,7 +48,7 @@ class BaseStore(ABC, Generic[K, V]):
 
     Examples:
         ```python
-        from langchain.storage import BaseStore
+        from langchain_core.stores import BaseStore
 
 
         class MyInMemoryStore(BaseStore[str, int]):
@@ -249,7 +249,7 @@ class InMemoryStore(InMemoryBaseStore[Any]):
 
     Examples:
         ```python
-        from langchain.storage import InMemoryStore
+        from langchain_core.stores import InMemoryStore
 
         store = InMemoryStore()
         store.mset([("key1", "value1"), ("key2", "value2")])
@@ -272,7 +272,7 @@ class InMemoryByteStore(InMemoryBaseStore[bytes]):
 
     Examples:
         ```python
-        from langchain.storage import InMemoryByteStore
+        from langchain_core.stores import InMemoryByteStore
 
         store = InMemoryByteStore()
         store.mset([("key1", b"value1"), ("key2", b"value2")])
