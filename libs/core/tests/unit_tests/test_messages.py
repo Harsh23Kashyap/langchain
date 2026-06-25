@@ -985,6 +985,38 @@ def test_merge_tool_calls_parallel_same_index() -> None:
     assert [m["id"] for m in merged] == ["id_a", "id_b", "id_c"]
 
 
+def test_merge_tool_calls_string_digit_index() -> None:
+    """String digit indexes should merge with int indexes for continuations."""
+    first = AIMessageChunk(
+        content="",
+        tool_call_chunks=[
+            create_tool_call_chunk(name="search", args="", id="id1", index=0),
+        ],
+    )
+    continuation = AIMessageChunk(
+        content="",
+        tool_call_chunks=[
+            {
+                "name": None,
+                "args": '{"query": "bar"}',
+                "id": None,
+                "index": "0",
+                "type": "tool_call_chunk",
+            }
+        ],
+    )
+    merged = first + continuation
+    assert merged.tool_call_chunks == [
+        create_tool_call_chunk(
+            name="search", args='{"query": "bar"}', id="id1", index=0
+        )
+    ]
+    assert merged.tool_calls == [
+        {"name": "search", "args": {"query": "bar"}, "id": "id1", "type": "tool_call"}
+    ]
+    assert merged.invalid_tool_calls == []
+
+
 def test_tool_message_serdes() -> None:
     message = ToolMessage(
         "foo", artifact={"bar": {"baz": 123}}, tool_call_id="1", status="error"

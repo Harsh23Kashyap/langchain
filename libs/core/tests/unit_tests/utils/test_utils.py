@@ -437,6 +437,18 @@ def test_generation_chunk_addition_type_error() -> None:
             [{"no_index": "b"}],
             [{"no_index": "a"}, {"no_index": "b"}],
         ),
+        # String digit index merges with int index for tool-call chunks
+        (
+            [{"index": 0, "name": "search", "args": "", "id": "id1"}],
+            [{"index": "0", "name": None, "args": '{"q": 1}', "id": None}],
+            [{"index": 0, "name": "search", "args": '{"q": 1}', "id": "id1"}],
+        ),
+        # Float whole-number index merges with int index
+        (
+            [{"index": 0, "name": "search", "args": "", "id": "id1"}],
+            [{"index": 0.0, "name": None, "args": '{"q": 1}', "id": None}],
+            [{"index": 0, "name": "search", "args": '{"q": 1}', "id": "id1"}],
+        ),
     ],
 )
 def test_merge_lists(

@@ -3,6 +3,28 @@ from __future__ import annotations
 from typing import Any
 
 
+def _is_mergeable_tool_call_index(index: Any) -> bool:
+    if isinstance(index, int):
+        return True
+    if isinstance(index, str):
+        return index.startswith("lc_") or index.isdigit()
+    return isinstance(index, float) and index.is_integer()
+
+
+def _tool_call_index_matches(left: Any, right: Any) -> bool:
+    if left == right:
+        return True
+
+    def _normalize(index: Any) -> Any:
+        if isinstance(index, str) and index.isdigit():
+            return int(index)
+        if isinstance(index, float) and index.is_integer():
+            return int(index)
+        return index
+
+    return bool(_normalize(left) == _normalize(right))
+
+
 def merge_dicts(left: dict[str, Any], *others: dict[str, Any]) -> dict[str, Any]:
     r"""Merge dictionaries.
 
@@ -107,19 +129,14 @@ def merge_lists(left: list[Any] | None, *others: list[Any] | None) -> list[Any] 
                 if (
                     isinstance(e, dict)
                     and "index" in e
-                    and (
-                        isinstance(e["index"], int)
-                        or (
-                            isinstance(e["index"], str) and e["index"].startswith("lc_")
-                        )
-                    )
+                    and _is_mergeable_tool_call_index(e["index"])
                 ):
                     to_merge = [
                         i
                         for i, e_left in enumerate(merged)
                         if (
                             "index" in e_left
-                            and e_left["index"] == e["index"]  # index matches
+                            and _tool_call_index_matches(e_left["index"], e["index"])
                             and (  # IDs not inconsistent
                                 e_left.get("id") in (None, "")
                                 or e.get("id") in (None, "")
@@ -157,8 +174,16 @@ def merge_lists(left: list[Any] | None, *others: list[Any] | None) -> list[Any] 
                             new_e = (
                                 {k: v for k, v in e.items() if k != "type"}
                                 if "type" in e
-                                else e
+                                else dict(e)
                             )
+                        if (
+                            "index" in new_e
+                            and "index" in merged[to_merge[0]]
+                            and _tool_call_index_matches(
+                                merged[to_merge[0]]["index"], new_e["index"]
+                            )
+                        ):
+                            new_e.pop("index")
                         merged[to_merge[0]] = merge_dicts(merged[to_merge[0]], new_e)
                     else:
                         merged.append(e)
